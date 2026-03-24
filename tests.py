@@ -1,6 +1,13 @@
 import pytest
 from model import Question
 
+@pytest.fixture
+def question_with_choices():
+    question = Question(title='What are primary colors?', max_selections=2)
+    question.add_choice('Red', is_correct=True)
+    question.add_choice('Green', is_correct=False)
+    question.add_choice('Blue', is_correct=True)
+    return question
 
 def test_create_question():
     question = Question(title='q1')
@@ -113,3 +120,27 @@ def test_selecting_more_choices_than_allowed_fails():
     
     with pytest.raises(Exception, match="Cannot select more than 1 choices"):
         question.correct_selected_choices([1, 2])
+
+def test_correct_selected_choices_with_mixed_answers(question_with_choices):
+    result = question_with_choices.correct_selected_choices([1, 2])
+    
+    assert result == [1]
+
+def test_correct_selected_choices_with_all_correct_answers(question_with_choices):
+    result = question_with_choices.correct_selected_choices([1, 3])
+    
+    assert result == [1, 3]
+
+def test_remove_all_choices_clears_populated_question(question_with_choices):
+    assert len(question_with_choices.choices) == 3
+    
+    question_with_choices.remove_all_choices()
+    
+    assert len(question_with_choices.choices) == 0
+
+def test_set_correct_choices_modifies_existing_choices(question_with_choices):
+    assert not question_with_choices.choices[1].is_correct
+    
+    question_with_choices.set_correct_choices([2])
+    
+    assert question_with_choices.choices[1].is_correct
